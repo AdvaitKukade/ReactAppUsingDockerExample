@@ -31,7 +31,6 @@ workflows:
     jobs:
       - run_tests
       - docker/publish: 
-          image: advaitkukade/reactnginx:1.0
           dockerfile: dockerfile
           requires:
             - run_tests
