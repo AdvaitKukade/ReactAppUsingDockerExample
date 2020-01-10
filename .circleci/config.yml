@@ -30,7 +30,8 @@ workflows:
   build_deploy:
     jobs:
       - run_tests
-      - docker/publish: 
+      - docker/publish:
+          image: myreactimage:1.0
           dockerfile: dockerfile
           requires:
             - run_tests
