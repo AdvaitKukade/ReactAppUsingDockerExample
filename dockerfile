@@ -1,42 +1,20 @@
-version: 2.1
+FROM node:11.1.0-alpine as build
 
-orbs:
-  docker: circleci/docker@0.5.13
+WORKDIR /app
 
-jobs:
-  run_tests:
-    working_directory: ~/react-app
-    docker:
-      - image: circleci/node:10.16.3
-    steps:
-      - checkout
-      - run:
-          name: update-npm
-          command: 'sudo npm install -g npm@latest'
-      - restore_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
-      - run:
-          name: npm-install
-          command: npm install
-      - save_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
-          paths:
-            - ./node_modules
-      - run:
-          name: test
-          command: npm test
-  
-workflows:
-  version: 2
-  build_deploy:
-    jobs:
-      - run_tests
-      - docker/publish:
-          image: gumshoe/$CIRCLE_PROJECT_REPONAME
-          dockerfile: dockerfile
-          requires:
-            - run_tests
-          filters:
-            branches:
-              only: 
-                - master
+COPY package*.json /app/
+
+RUN npm install
+
+COPY ./ /app/
+
+RUN npm run build
+
+FROM nginx:1.15.8-alpine
+
+COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/nginx/nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
